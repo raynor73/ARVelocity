@@ -1,13 +1,74 @@
 package org.ilapin.arvelocity.free;
 
+import android.Manifest;
+import android.app.ActivityManager;
+import android.content.pm.PackageManager;
+import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import org.ilapin.arvelocity.graphics.MainScene;
+import org.ilapin.arvelocity.graphics.SceneRenderer;
 
 public class MainActivity extends AppCompatActivity {
+
+	public static final int CAMERA_PERMISSION_REQUEST_CODE = 12345;
+
+	private GLSurfaceView mGlSurfaceView;
+	private boolean mIsRendererSet;
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+
+		mGlSurfaceView = new GLSurfaceView(this);
+		final MainScene scene = new MainScene();
+		final SceneRenderer renderer = new SceneRenderer(scene);
+
+		final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+		final boolean isSupportsEs2 = activityManager.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000
+				|| (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1 && (Build.FINGERPRINT.startsWith("generic")
+				|| Build.FINGERPRINT.startsWith("unknown")
+				|| Build.MODEL.contains("google_sdk")
+				|| Build.MODEL.contains("Emulator")
+				|| Build.MODEL.contains("Android SDK built for x86")));
+
+		if (isSupportsEs2) {
+			mGlSurfaceView.setRenderer(renderer);
+			mIsRendererSet = true;
+		} else {
+			Toast.makeText(this, "This device does not support OpenGL ES 2.0.", Toast.LENGTH_LONG).show();
+			return;
+		}
+
+		setContentView(mGlSurfaceView);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+			if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+				ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.CAMERA },
+						CAMERA_PERMISSION_REQUEST_CODE);
+			}
+		} else {
+			Log.d("!@#", "Access to camera granted");
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions,
+			@NonNull final int[] grantResults) {
+		if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				Log.d("!@#", "Access to camera granted");
+			}
+		}
 	}
 }
