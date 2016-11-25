@@ -11,10 +11,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
 import org.ilapin.arvelocity.graphics.MainScene;
 import org.ilapin.arvelocity.graphics.SceneRenderer;
+import org.ilapin.arvelocity.ui.MessageDialog;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MessageDialog.Listener {
 
 	public static final int CAMERA_PERMISSION_REQUEST_CODE = 12345;
 
@@ -41,7 +43,13 @@ public class MainActivity extends AppCompatActivity {
 			mGlSurfaceView.setRenderer(renderer);
 			mIsRendererSet = true;
 		} else {
-			Toast.makeText(this, "This device does not support OpenGL ES 2.0.", Toast.LENGTH_LONG).show();
+			MessageDialog.newInstance(
+					"Error",
+					"This device does not support OpenGL ES 2.0",
+					getString(android.R.string.ok),
+					getString(android.R.string.cancel)
+			).show(getSupportFragmentManager(), "MessageDialog");
+
 			return;
 		}
 
@@ -51,6 +59,10 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+
+		if (mIsRendererSet) {
+			mGlSurfaceView.onResume();
+		}
 
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
 			if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
@@ -63,6 +75,15 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	@Override
+	protected void onPause() {
+		super.onPause();
+
+		if (mIsRendererSet) {
+			mGlSurfaceView.onPause();
+		}
+	}
+
+	@Override
 	public void onRequestPermissionsResult(final int requestCode, @NonNull final String[] permissions,
 			@NonNull final int[] grantResults) {
 		if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
@@ -70,5 +91,15 @@ public class MainActivity extends AppCompatActivity {
 				Log.d("!@#", "Access to camera granted");
 			}
 		}
+	}
+
+	@Override
+	public void onPositiveButtonClick(final MessageDialog dialog) {
+		finish();
+	}
+
+	@Override
+	public void onNegativeButtonClick(final MessageDialog dialog) {
+		finish();
 	}
 }
