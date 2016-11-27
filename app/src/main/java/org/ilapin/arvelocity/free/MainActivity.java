@@ -13,8 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import org.ilapin.arvelocity.graphics.CameraPreview;
-import org.ilapin.arvelocity.graphics.MainScene;
-import org.ilapin.arvelocity.graphics.SceneRenderer;
+import org.ilapin.arvelocity.graphics.MainRenderer;
 import org.ilapin.arvelocity.ui.MessageDialog;
 
 import javax.inject.Inject;
@@ -25,9 +24,6 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 
 	private GLSurfaceView mGlSurfaceView;
 	private boolean mIsRendererSet;
-
-	@Inject
-	MainScene mMainScene;
 
 	@Inject
 	CameraPreview mCameraPreview;
@@ -41,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 		mCameraPreview.setActivity(this);
 
 		mGlSurfaceView = new GLSurfaceView(this);
-		final SceneRenderer renderer = new SceneRenderer(mMainScene, mCameraPreview);
+		final MainRenderer renderer = new MainRenderer(mCameraPreview, this);
 
 		final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 		final boolean isSupportsEs2 = activityManager.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000

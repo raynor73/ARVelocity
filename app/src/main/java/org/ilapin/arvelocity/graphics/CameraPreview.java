@@ -2,37 +2,19 @@ package org.ilapin.arvelocity.graphics;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.opengl.Matrix;
-import android.util.Log;
 import android.view.Surface;
 import android.widget.Toast;
 
-import org.ilapin.arvelocity.free.R;
 import org.ilapin.arvelocity.sensor.Sensor;
-import org.ilapin.common.android.CameraUtils;
 import org.ilapin.common.android.opengl.IndexBuffer;
 import org.ilapin.common.android.opengl.VertexBuffer;
 
-import java.io.IOException;
-import java.nio.IntBuffer;
-
-import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-import static android.opengl.GLES20.GL_CLAMP_TO_EDGE;
 import static android.opengl.GLES20.GL_ELEMENT_ARRAY_BUFFER;
-import static android.opengl.GLES20.GL_NEAREST;
-import static android.opengl.GLES20.GL_TEXTURE_MAG_FILTER;
-import static android.opengl.GLES20.GL_TEXTURE_MIN_FILTER;
-import static android.opengl.GLES20.GL_TEXTURE_WRAP_S;
-import static android.opengl.GLES20.GL_TEXTURE_WRAP_T;
 import static android.opengl.GLES20.GL_TRIANGLES;
 import static android.opengl.GLES20.GL_UNSIGNED_SHORT;
 import static android.opengl.GLES20.glBindBuffer;
-import static android.opengl.GLES20.glBindTexture;
 import static android.opengl.GLES20.glDrawElements;
-import static android.opengl.GLES20.glGenTextures;
-import static android.opengl.GLES20.glTexParameteri;
 import static org.ilapin.common.Constants.BYTES_PER_FLOAT;
 
 @SuppressWarnings("deprecation")
@@ -56,14 +38,10 @@ public class CameraPreview implements Renderable, Sensor {
 
 	private final Context mContext;
 
-	private boolean mIsTextureCoordinatesRecalculationRequired;
 	private Activity mActivity;
-	private Camera mCamera;
-	private SurfaceTexture mSurfaceTexture;
 	private VertexBuffer mVertexBuffer;
 	private IndexBuffer mIndexBuffer;
 	private CameraPreviewShaderProgram mShaderProgram;
-	private int mTextureId;
 
 	public CameraPreview(final Context context) {
 		mContext = context;
@@ -77,42 +55,12 @@ public class CameraPreview implements Renderable, Sensor {
 		mIndexBuffer = new IndexBuffer(mIndices);
 		mShaderProgram = new CameraPreviewShaderProgram(mContext);
 
-		final IntBuffer intBuffer = IntBuffer.allocate(1);
-		glGenTextures(1, intBuffer);
-		glBindTexture(GL_TEXTURE_EXTERNAL_OES, intBuffer.get(0));
-		glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
-		mTextureId = intBuffer.get(0);
-
-		mSurfaceTexture = new SurfaceTexture(mTextureId);
-
 		Matrix.setIdentityM(mProjectionMatrix, 0);
 	}
 
 	@Override
 	public void render() {
-		/*if (mIsTextureCoordinatesRecalculationRequired) {
-			mIsTextureCoordinatesRecalculationRequired = false;
-
-		}*/
-
-		/*final org.ilapin.arvelocity.graphics.Camera camera = scene.getActiveCamera();
-		final float width = camera.getWidth();
-		final float height = camera.getHeight();
-		final float aspectRatio = width > height ? (float) width / (float) height : (float) height / (float) width;
-		if (width > height) {
-			// Landscape
-			orthoM(mProjectionMatrix, 0, -aspectRatio, aspectRatio, -1f, 1f, -1f, 1f);
-		} else {
-			// Portrait or square
-			orthoM(mProjectionMatrix, 0, -1f, 1f, -aspectRatio, aspectRatio, -1f, 1f);
-		}*/
-
 		mShaderProgram.useProgram();
-		mShaderProgram.setUniforms(mProjectionMatrix, mTextureId);
 		mVertexBuffer.setVertexAttribPointer(0, mShaderProgram.getPositionAttributeLocation(),
 				NUMBER_OF_VERTEX_COMPONENTS, STRIDE);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer.getBufferId());
@@ -121,37 +69,10 @@ public class CameraPreview implements Renderable, Sensor {
 	}
 
 	@Override
-	public void start() {
-		mIsTextureCoordinatesRecalculationRequired = true;
-
-		mCamera = android.hardware.Camera.open();
-		if (mCamera == null) {
-			Toast.makeText(mActivity, R.string.error_can_not_open_camera, Toast.LENGTH_SHORT).show();
-			return;
-		}
-
-		final Camera.Parameters cameraParameters = mCamera.getParameters();
-		final Camera.Size previewSize = CameraUtils.calculateLargestPreviewSize(mCamera);
-		Log.d("CameraPreview", String.format("Preview width: %d; height: %d", previewSize.width, previewSize.height));
-		cameraParameters.setPreviewSize(previewSize.width, previewSize.height);
-		mCamera.setParameters(cameraParameters);
-
-		try {
-			mCamera.setPreviewTexture(mSurfaceTexture);
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-
-		mCamera.startPreview();
-	}
+	public void start() {}
 
 	@Override
-	public void stop() {
-		if (mCamera != null) {
-			mCamera.release();
-			mCamera = null;
-		}
-	}
+	public void stop() {}
 
 	public void setActivity(final Activity activity) {
 		mActivity = activity;
