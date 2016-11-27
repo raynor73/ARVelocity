@@ -1,3 +1,4 @@
 <resources>
 	<string name="app_name">AR Velocity</string>
+	<string name="error_can_not_open_camera">Can\'t open camera</string>
 </resources>

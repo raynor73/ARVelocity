@@ -1,5 +1,8 @@
 package org.ilapin.arvelocity.graphics;
 
+import android.app.Activity;
+import android.content.Context;
+
 import org.ilapin.common.geometry.Point;
 
 import static android.opengl.GLES20.glClearColor;
@@ -13,6 +16,20 @@ public class MainScene implements Scene {
 	private final float[] mViewMatrix = new float[16];
 
 	private Camera mCamera;
+	private final CameraPreview mCameraPreview;
+
+	public MainScene(final Context context) {
+		mCameraPreview = new CameraPreview(context);
+	}
+
+	public void setActivity(final Activity activity) {
+		mCameraPreview.setActivity(activity);
+	}
+
+	@Override
+	public Camera getActiveCamera() {
+		return mCamera;
+	}
 
 	@Override
 	public void onOpenGlReady(final int viewPortWidth, final int viewPortHeight) {
@@ -35,12 +52,18 @@ public class MainScene implements Scene {
 				cameraLookAt.getZ(),
 				0f, 1f, 0f
 		);
+
+		mCameraPreview.onOpenGlReady();
 	}
 
 	@Override
 	public void render() {
 		if (mCamera != null) {
-			// render
+			mCameraPreview.render(this);
 		}
+	}
+
+	public CameraPreview getCameraPreview() {
+		return mCameraPreview;
 	}
 }

@@ -16,6 +16,8 @@ import org.ilapin.arvelocity.graphics.MainScene;
 import org.ilapin.arvelocity.graphics.SceneRenderer;
 import org.ilapin.arvelocity.ui.MessageDialog;
 
+import javax.inject.Inject;
+
 public class MainActivity extends AppCompatActivity implements MessageDialog.Listener {
 
 	public static final int CAMERA_PERMISSION_REQUEST_CODE = 12345;
@@ -23,13 +25,17 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 	private GLSurfaceView mGlSurfaceView;
 	private boolean mIsRendererSet;
 
+	@Inject
+	MainScene mMainScene;
+
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		App.getApplicationComponent().inject(this);
+
 		mGlSurfaceView = new GLSurfaceView(this);
-		final MainScene scene = new MainScene();
-		final SceneRenderer renderer = new SceneRenderer(scene);
+		final SceneRenderer renderer = new SceneRenderer(mMainScene);
 
 		final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 		final boolean isSupportsEs2 = activityManager.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000
@@ -40,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 				|| Build.MODEL.contains("Android SDK built for x86")));
 
 		if (isSupportsEs2) {
+			mGlSurfaceView.setEGLContextClientVersion(2);
 			mGlSurfaceView.setRenderer(renderer);
 			mIsRendererSet = true;
 		} else {
@@ -54,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 		}
 
 		setContentView(mGlSurfaceView);
+
+		mMainScene.setActivity(this);
 	}
 
 	@Override
@@ -72,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 		} else {
 			Log.d("!@#", "Access to camera granted");
 		}
+
+		mMainScene.getCameraPreview().start();
 	}
 
 	@Override
@@ -81,6 +92,15 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 		if (mIsRendererSet) {
 			mGlSurfaceView.onPause();
 		}
+
+		mMainScene.getCameraPreview().stop();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+
+		mMainScene.setActivity(null);
 	}
 
 	@Override
