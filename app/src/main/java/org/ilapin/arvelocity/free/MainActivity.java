@@ -27,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 
 	@Inject
 	CameraPreview mCameraPreview;
+	@Inject
+	MainRenderer mRenderer;
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
@@ -37,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 		mCameraPreview.setActivity(this);
 
 		mGlSurfaceView = new GLSurfaceView(this);
-		final MainRenderer renderer = new MainRenderer(mCameraPreview, this);
 
 		final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 		final boolean isSupportsEs2 = activityManager.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 
 		if (isSupportsEs2) {
 			mGlSurfaceView.setEGLContextClientVersion(2);
-			mGlSurfaceView.setRenderer(renderer);
+			mGlSurfaceView.setRenderer(mRenderer);
 			mIsRendererSet = true;
 		} else {
 			MessageDialog.newInstance(

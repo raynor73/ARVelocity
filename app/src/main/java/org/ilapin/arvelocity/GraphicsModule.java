@@ -3,6 +3,7 @@ package org.ilapin.arvelocity;
 import android.content.Context;
 
 import org.ilapin.arvelocity.graphics.CameraPreview;
+import org.ilapin.arvelocity.graphics.MainRenderer;
 
 import javax.inject.Singleton;
 
@@ -17,6 +18,11 @@ public class GraphicsModule {
 	public MainScene provideMainScene(final Context context) {
 		return new MainScene(context);
 	}*/
+
+	@Provides
+	public MainRenderer provideMainRenderer(final CameraPreview cameraPreview) {
+		return new MainRenderer(cameraPreview);
+	}
 
 	@Provides
 	@Singleton

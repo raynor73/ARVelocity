@@ -10,7 +10,6 @@ import static android.opengl.GLES20.glGetAttribLocation;
 public class CameraPreviewShaderProgram extends ShaderProgram {
 
 	protected static final String A_POSITION = "a_Position";
-	protected static final String U_MATRIX = "u_Matrix";
 
 	private final int mPositionAttributeLocation;
 

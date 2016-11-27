@@ -2,7 +2,6 @@ package org.ilapin.arvelocity.graphics;
 
 import android.app.Activity;
 import android.content.Context;
-import android.opengl.Matrix;
 import android.view.Surface;
 import android.widget.Toast;
 
@@ -34,7 +33,6 @@ public class CameraPreview implements Renderable, Sensor {
 			0, 1, 2,
 			2, 3, 0
 	};
-	private final float[] mProjectionMatrix = new float[16];
 
 	private final Context mContext;
 
@@ -54,17 +52,21 @@ public class CameraPreview implements Renderable, Sensor {
 		mVertexBuffer = new VertexBuffer(mVertices);
 		mIndexBuffer = new IndexBuffer(mIndices);
 		mShaderProgram = new CameraPreviewShaderProgram(mContext);
-
-		Matrix.setIdentityM(mProjectionMatrix, 0);
 	}
 
 	@Override
 	public void render() {
 		mShaderProgram.useProgram();
-		mVertexBuffer.setVertexAttribPointer(0, mShaderProgram.getPositionAttributeLocation(),
-				NUMBER_OF_VERTEX_COMPONENTS, STRIDE);
+
+		mVertexBuffer.setVertexAttribPointer(
+				0,
+				mShaderProgram.getPositionAttributeLocation(),
+				NUMBER_OF_VERTEX_COMPONENTS,
+				STRIDE
+		);
+
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer.getBufferId());
-		glDrawElements(GL_TRIANGLES, mIndices.length / 3, GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, mIndices.length, GL_UNSIGNED_SHORT, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
