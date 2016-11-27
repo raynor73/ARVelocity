@@ -4,5 +4,5 @@ public interface Renderable {
 
 	void onOpenGlReady();
 
-	void render(Scene scene);
+	void render();
 }

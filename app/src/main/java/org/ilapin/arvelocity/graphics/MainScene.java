@@ -1,12 +1,10 @@
 package org.ilapin.arvelocity.graphics;
 
-import android.app.Activity;
 import android.content.Context;
 
 import org.ilapin.common.geometry.Point;
 
 import static android.opengl.GLES20.glClearColor;
-import static android.opengl.GLES20.glViewport;
 import static android.opengl.Matrix.perspectiveM;
 import static android.opengl.Matrix.setLookAtM;
 
@@ -16,15 +14,15 @@ public class MainScene implements Scene {
 	private final float[] mViewMatrix = new float[16];
 
 	private Camera mCamera;
-	private final CameraPreview mCameraPreview;
+//	private final CameraPreview mCameraPreview;
 
 	public MainScene(final Context context) {
-		mCameraPreview = new CameraPreview(context);
+		//mCameraPreview = new CameraPreview(context);
 	}
 
-	public void setActivity(final Activity activity) {
+	/*public void setActivity(final Activity activity) {
 		mCameraPreview.setActivity(activity);
-	}
+	}*/
 
 	@Override
 	public Camera getActiveCamera() {
@@ -38,7 +36,7 @@ public class MainScene implements Scene {
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-		glViewport(0, 0, viewPortWidth, viewPortHeight);
+		//glViewport(0, 0, viewPortWidth, viewPortHeight);
 		perspectiveM(mProjectionMatrix, 0, 45, (float) viewPortWidth / (float) viewPortHeight, 1f, 1000f);
 		final Point cameraPosition = mCamera.getPosition();
 		final Point cameraLookAt = mCamera.getLookAt();
@@ -53,17 +51,17 @@ public class MainScene implements Scene {
 				0f, 1f, 0f
 		);
 
-		mCameraPreview.onOpenGlReady();
+		//mCameraPreview.onOpenGlReady();
 	}
 
 	@Override
 	public void render() {
 		if (mCamera != null) {
-			mCameraPreview.render(this);
+		//	mCameraPreview.render();
 		}
 	}
 
-	public CameraPreview getCameraPreview() {
+	/*public CameraPreview getCameraPreview() {
 		return mCameraPreview;
-	}
+	}*/
 }

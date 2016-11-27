@@ -12,6 +12,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import org.ilapin.arvelocity.graphics.CameraPreview;
 import org.ilapin.arvelocity.graphics.MainScene;
 import org.ilapin.arvelocity.graphics.SceneRenderer;
 import org.ilapin.arvelocity.ui.MessageDialog;
@@ -28,14 +29,19 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 	@Inject
 	MainScene mMainScene;
 
+	@Inject
+	CameraPreview mCameraPreview;
+
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		App.getApplicationComponent().inject(this);
 
+		mCameraPreview.setActivity(this);
+
 		mGlSurfaceView = new GLSurfaceView(this);
-		final SceneRenderer renderer = new SceneRenderer(mMainScene);
+		final SceneRenderer renderer = new SceneRenderer(mMainScene, mCameraPreview);
 
 		final ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 		final boolean isSupportsEs2 = activityManager.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000
@@ -61,8 +67,6 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 		}
 
 		setContentView(mGlSurfaceView);
-
-		mMainScene.setActivity(this);
 	}
 
 	@Override
@@ -82,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 			Log.d("!@#", "Access to camera granted");
 		}
 
-		mMainScene.getCameraPreview().start();
+		mCameraPreview.start();
 	}
 
 	@Override
@@ -93,14 +97,14 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 			mGlSurfaceView.onPause();
 		}
 
-		mMainScene.getCameraPreview().stop();
+		mCameraPreview.stop();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 
-		mMainScene.setActivity(null);
+		mCameraPreview.setActivity(null);
 	}
 
 	@Override

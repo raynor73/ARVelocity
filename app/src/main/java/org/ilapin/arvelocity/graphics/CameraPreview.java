@@ -93,7 +93,7 @@ public class CameraPreview implements Renderable, Sensor {
 	}
 
 	@Override
-	public void render(final Scene scene) {
+	public void render() {
 		/*if (mIsTextureCoordinatesRecalculationRequired) {
 			mIsTextureCoordinatesRecalculationRequired = false;
 
