@@ -11,7 +11,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-
 import org.ilapin.arvelocity.graphics.CameraPreview;
 import org.ilapin.arvelocity.graphics.MainRenderer;
 import org.ilapin.arvelocity.ui.MessageDialog;
@@ -90,11 +89,11 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 	protected void onPause() {
 		super.onPause();
 
+		mCameraPreview.stop();
+
 		if (mIsRendererSet) {
 			mGlSurfaceView.onPause();
 		}
-
-		mCameraPreview.stop();
 	}
 
 	@Override

@@ -4,9 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.opengl.Matrix;
+import android.util.Log;
 import android.view.Surface;
 import android.widget.Toast;
-
 import org.ilapin.arvelocity.free.R;
 import org.ilapin.arvelocity.sensor.Sensor;
 import org.ilapin.common.android.CameraUtils;
@@ -18,27 +19,19 @@ import java.nio.IntBuffer;
 
 import static android.opengl.GLES10.GL_TEXTURE_MIN_FILTER;
 import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
-import static android.opengl.GLES20.GL_CLAMP_TO_EDGE;
-import static android.opengl.GLES20.GL_ELEMENT_ARRAY_BUFFER;
-import static android.opengl.GLES20.GL_NEAREST;
-import static android.opengl.GLES20.GL_TEXTURE_MAG_FILTER;
-import static android.opengl.GLES20.GL_TEXTURE_WRAP_S;
-import static android.opengl.GLES20.GL_TEXTURE_WRAP_T;
-import static android.opengl.GLES20.GL_TRIANGLES;
-import static android.opengl.GLES20.GL_UNSIGNED_SHORT;
-import static android.opengl.GLES20.glBindBuffer;
-import static android.opengl.GLES20.glBindTexture;
-import static android.opengl.GLES20.glDrawElements;
-import static android.opengl.GLES20.glGenTextures;
-import static android.opengl.GLES20.glTexParameteri;
+import static android.opengl.GLES20.*;
 import static org.ilapin.common.Constants.BYTES_PER_FLOAT;
 
 @SuppressWarnings("deprecation")
 public class CameraPreview implements Renderable, Sensor {
 
-	private static final int NUMBER_OF_VERTEX_COMPONENTS = 2;
+	private static final String TAG = "CameraPreview";
+
+	private static final int NUMBER_OF_POSITION_COMPONENTS = 2;
 	private static final int NUMBER_OF_TEXTURE_COMPONENTS = 2;
-	private static final int STRIDE = (NUMBER_OF_VERTEX_COMPONENTS + NUMBER_OF_TEXTURE_COMPONENTS) * BYTES_PER_FLOAT;
+	private static final int STRIDE = (NUMBER_OF_POSITION_COMPONENTS + NUMBER_OF_TEXTURE_COMPONENTS) * BYTES_PER_FLOAT;
+
+	private final float[] mSurfaceTextureTransformMatrix = new float[16];
 
 	private final float[] mVertices = new float[] {
 			-1, 1, 0, 0,
@@ -53,7 +46,13 @@ public class CameraPreview implements Renderable, Sensor {
 
 	private final Context mContext;
 
-	private Activity mActivity;
+	private volatile Activity mActivity;
+	private volatile boolean mIsTextureCoordinatesCalculated;
+	private volatile boolean mHasPendingTextureCoordinatesCalculation;
+	private volatile boolean mHasPendingStartPreview;
+
+	private volatile boolean mIsOpenGlReady;
+
 	private VertexBuffer mVertexBuffer;
 	private IndexBuffer mIndexBuffer;
 	private CameraPreviewShaderProgram mShaderProgram;
@@ -67,16 +66,41 @@ public class CameraPreview implements Renderable, Sensor {
 
 	@Override
 	public void onOpenGlReady() {
-		recalculateTextureCoordinates();
+		Log.d(TAG, "OpenGL ready...");
+		if (mIsOpenGlReady) {
+			Log.d(TAG, "OpenGL ready callback already fired, ignoring it...");
+			return;
+		}
 
-		mVertexBuffer = new VertexBuffer(mVertices);
 		mIndexBuffer = new IndexBuffer(mIndices);
 		mShaderProgram = new CameraPreviewShaderProgram(mContext);
 		mTextureUnitLocation = initTextureUnit();
+
+		if (mActivity != null) {
+			Log.d(TAG, "Activity found, calculating texture coordinates...");
+			calculateTextureCoordinates();
+			mVertexBuffer = new VertexBuffer(mVertices);
+			mIsTextureCoordinatesCalculated = true;
+			mHasPendingTextureCoordinatesCalculation = false;
+			if (mHasPendingStartPreview) {
+				mHasPendingStartPreview = false;
+				Log.d(TAG, "Pending camera preview found, starting preview...");
+				startCameraPreview();
+			}
+		} else {
+			Log.d(TAG, "Activity not found, postponing calculation of texture coordinates...");
+			mHasPendingTextureCoordinatesCalculation = true;
+		}
+
+		mIsOpenGlReady = true;
 	}
 
 	@Override
 	public void render() {
+		if (mHasPendingStartPreview || mCamera == null) {
+			return;
+		}
+
 		mSurfaceTexture.updateTexImage();
 
 		mShaderProgram.useProgram();
@@ -84,17 +108,19 @@ public class CameraPreview implements Renderable, Sensor {
 		mVertexBuffer.setVertexAttribPointer(
 				0,
 				mShaderProgram.getPositionAttributeLocation(),
-				NUMBER_OF_VERTEX_COMPONENTS,
+				NUMBER_OF_POSITION_COMPONENTS,
 				STRIDE
 		);
 		mVertexBuffer.setVertexAttribPointer(
-				NUMBER_OF_VERTEX_COMPONENTS,
+				NUMBER_OF_POSITION_COMPONENTS * BYTES_PER_FLOAT,
 				mShaderProgram.getTextureCoordinateAttributeLocation(),
 				NUMBER_OF_TEXTURE_COMPONENTS,
 				STRIDE
 		);
 
-		mShaderProgram.setUniforms(mTextureUnitLocation);
+		// TODO Remove texture matrix and try to calculate texture coordinates considering view and camera preview aspect ratios.
+		Matrix.setIdentityM(mSurfaceTextureTransformMatrix, 0);
+		mShaderProgram.setUniforms(mTextureUnitLocation, mSurfaceTextureTransformMatrix);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer.getBufferId());
 		glDrawElements(GL_TRIANGLES, mIndices.length, GL_UNSIGNED_SHORT, 0);
@@ -103,6 +129,47 @@ public class CameraPreview implements Renderable, Sensor {
 
 	@Override
 	public void start() {
+		Log.d(TAG, "Starting camera...");
+		if (!mIsOpenGlReady) {
+			Log.d(TAG, "OpenGL is not ready, postponing preview...");
+			mHasPendingStartPreview = true;
+		} else if (mIsTextureCoordinatesCalculated) {
+			Log.d(TAG, "Texture coordinates calculated, starting preview...");
+			mHasPendingStartPreview = false;
+			startCameraPreview();
+		} else {
+			Log.d(TAG, "Texture coordinates not calculated, postponing preview...");
+			mHasPendingStartPreview = true;
+		}
+	}
+
+	@Override
+	public void stop() {
+		if (mCamera != null) {
+			mCamera.release();
+			mCamera = null;
+		}
+		mIsOpenGlReady = false;
+	}
+
+	public void setActivity(final Activity activity) {
+		Log.d(TAG, "Setting activity...");
+		mActivity = activity;
+
+		if (mActivity != null && mHasPendingTextureCoordinatesCalculation) {
+			Log.d(TAG, "Pending texture coordinates calculation found, calculating texture coordinates...");
+			mHasPendingTextureCoordinatesCalculation = false;
+			calculateTextureCoordinates();
+			mVertexBuffer = new VertexBuffer(mVertices);
+			if (mHasPendingStartPreview) {
+				Log.d(TAG, "Pending camera preview found, starting camera preview...");
+				mHasPendingStartPreview = false;
+				startCameraPreview();
+			}
+		}
+	}
+
+	private void startCameraPreview() {
 		mCamera = Camera.open();
 
 		if (mCamera != null) {
@@ -125,18 +192,6 @@ public class CameraPreview implements Renderable, Sensor {
 		}
 	}
 
-	@Override
-	public void stop() {
-		if (mCamera != null) {
-			mCamera.release();
-			mCamera = null;
-		}
-	}
-
-	public void setActivity(final Activity activity) {
-		mActivity = activity;
-	}
-
 	private int initTextureUnit() {
 		final IntBuffer intBuffer = IntBuffer.allocate(1);
 		glGenTextures(1, intBuffer);
@@ -149,9 +204,10 @@ public class CameraPreview implements Renderable, Sensor {
 		return intBuffer.get(0);
 	}
 
-	private void recalculateTextureCoordinates() {
+	private void calculateTextureCoordinates() {
 		switch (mActivity.getWindowManager().getDefaultDisplay().getRotation()) {
 			case Surface.ROTATION_0:
+				Log.d(TAG, "ROTATION_0 detected");
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 1.0f;
@@ -167,6 +223,7 @@ public class CameraPreview implements Renderable, Sensor {
 				break;
 
 			case Surface.ROTATION_90:
+				Log.d(TAG, "ROTATION_90 detected");
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.0f;
@@ -182,6 +239,7 @@ public class CameraPreview implements Renderable, Sensor {
 				break;
 
 			case Surface.ROTATION_180:
+				Log.d(TAG, "ROTATION_180 detected");
 				// top left
 				mVertices[2] = 1.0f;
 				mVertices[3] = 0.0f;
@@ -197,6 +255,7 @@ public class CameraPreview implements Renderable, Sensor {
 				break;
 
 			case Surface.ROTATION_270:
+				Log.d(TAG, "ROTATION_270 detected");
 				// top left
 				mVertices[2] = 1.0f;
 				mVertices[3] = 1.0f;
@@ -212,6 +271,7 @@ public class CameraPreview implements Renderable, Sensor {
 				break;
 
 			default:
+				Log.d(TAG, "Unknown orientation");
 				Toast.makeText(mActivity, "Unknown orientation", Toast.LENGTH_SHORT).show();
 				// top left
 				mVertices[2] = 0.0f;
