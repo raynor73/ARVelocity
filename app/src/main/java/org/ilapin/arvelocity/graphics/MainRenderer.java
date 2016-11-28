@@ -1,14 +1,12 @@
 package org.ilapin.arvelocity.graphics;
 
 import android.opengl.GLSurfaceView;
+import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
-import static android.opengl.GLES20.glClear;
-import static android.opengl.GLES20.glClearColor;
-import static android.opengl.GLES20.glViewport;
+import static android.opengl.GLES20.*;
 
 public class MainRenderer implements GLSurfaceView.Renderer {
 
@@ -27,6 +25,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 	public void onSurfaceChanged(final GL10 gl10, final int width, final int height) {
 		glClearColor(0, 0, 0, 0);
 		glViewport(0, 0, width, height);
+		Log.d("!@#", "Viewport width: " + width + "; height: " + height);
 		mCameraPreview.onOpenGlReady();
 	}
 

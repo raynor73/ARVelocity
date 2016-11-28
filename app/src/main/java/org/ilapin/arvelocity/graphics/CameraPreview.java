@@ -176,6 +176,7 @@ public class CameraPreview implements Renderable, Sensor {
 			final Camera.Parameters cameraParameters = mCamera.getParameters();
 			final Camera.Size size = CameraUtils.calculateLargestPreviewSize(mCamera);
 			cameraParameters.setPreviewSize(size.width, size.height);
+			Log.d("!@#", "Camera preview width: " + size.width + "; height: " + size.height);
 			mCamera.setParameters(cameraParameters);
 
 			mSurfaceTexture = new SurfaceTexture(mTextureUnitLocation);
@@ -210,6 +211,19 @@ public class CameraPreview implements Renderable, Sensor {
 				Log.d(TAG, "ROTATION_0 detected");
 				// top left
 				mVertices[2] = 0.0f;
+				mVertices[3] = 0.99825f;
+				// bottom left
+				mVertices[6] = 1.0f;
+				mVertices[7] = 0.99825f;
+				// bottom right
+				mVertices[10] = 1.0f;
+				mVertices[11] = 0.0f;
+				// top right
+				mVertices[14] = 0.0f;
+				mVertices[15] = 0.0f;
+				/*
+				// top left
+				mVertices[2] = 0.0f;
 				mVertices[3] = 1.0f;
 				// bottom left
 				mVertices[6] = 1.0f;
@@ -220,10 +234,24 @@ public class CameraPreview implements Renderable, Sensor {
 				// top right
 				mVertices[14] = 0.0f;
 				mVertices[15] = 0.0f;
+				*/
 				break;
 
 			case Surface.ROTATION_90:
 				Log.d(TAG, "ROTATION_90 detected");
+				// top left
+				mVertices[2] = 0.0f;
+				mVertices[3] = 0.0f;
+				// bottom left
+				mVertices[6] = 0.0f;
+				mVertices[7] = 0.6941f;
+				// bottom right
+				mVertices[10] = 1.0f;
+				mVertices[11] = 0.6941f;
+				// top right
+				mVertices[14] = 1.0f;
+				mVertices[15] = 0.0f;
+				/*
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.0f;
@@ -236,6 +264,7 @@ public class CameraPreview implements Renderable, Sensor {
 				// top right
 				mVertices[14] = 1.0f;
 				mVertices[15] = 0.0f;
+				*/
 				break;
 
 			case Surface.ROTATION_180:
