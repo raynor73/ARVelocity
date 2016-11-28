@@ -26,6 +26,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 		glClearColor(0, 0, 0, 0);
 		glViewport(0, 0, width, height);
 		Log.d("!@#", "Viewport width: " + width + "; height: " + height);
+		mCameraPreview.setWidth(width);
+		mCameraPreview.setHeight(height);
 		mCameraPreview.onOpenGlReady();
 	}
 

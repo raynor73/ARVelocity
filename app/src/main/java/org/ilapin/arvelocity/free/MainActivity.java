@@ -10,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import org.ilapin.arvelocity.graphics.CameraPreview;
 import org.ilapin.arvelocity.graphics.MainRenderer;
 import org.ilapin.arvelocity.ui.MessageDialog;
@@ -79,10 +78,8 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 						CAMERA_PERMISSION_REQUEST_CODE);
 			}
 		} else {
-			Log.d("!@#", "Access to camera granted");
+			mCameraPreview.start();
 		}
-
-		mCameraPreview.start();
 	}
 
 	@Override
@@ -108,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements MessageDialog.Lis
 			@NonNull final int[] grantResults) {
 		if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
 			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-				Log.d("!@#", "Access to camera granted");
+				mCameraPreview.start();
 			}
 		}
 	}

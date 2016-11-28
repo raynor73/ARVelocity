@@ -45,11 +45,17 @@ public class CameraPreview implements Renderable, Sensor {
 	};
 
 	private final Context mContext;
+	private float mWidth;
+	private float mHeight;
 
 	private volatile Activity mActivity;
 	private volatile boolean mIsTextureCoordinatesCalculated;
 	private volatile boolean mHasPendingTextureCoordinatesCalculation;
 	private volatile boolean mHasPendingStartPreview;
+
+	private volatile float mCameraWidth;
+	private volatile float mCameraHeight;
+	private volatile boolean mIsCameraSizeKnown;
 
 	private volatile boolean mIsOpenGlReady;
 
@@ -76,9 +82,10 @@ public class CameraPreview implements Renderable, Sensor {
 		mShaderProgram = new CameraPreviewShaderProgram(mContext);
 		mTextureUnitLocation = initTextureUnit();
 
-		if (mActivity != null) {
-			Log.d(TAG, "Activity found, calculating texture coordinates...");
-			calculateTextureCoordinates();
+		if (mActivity != null && mIsCameraSizeKnown) {
+			Log.d(TAG, "...");
+			Log.d(TAG, "Activity found and camera size present, calculating texture coordinates...");
+			calculateTextureCoordinates(mCameraWidth, mCameraHeight);
 			mVertexBuffer = new VertexBuffer(mVertices);
 			mIsTextureCoordinatesCalculated = true;
 			mHasPendingTextureCoordinatesCalculation = false;
@@ -88,7 +95,7 @@ public class CameraPreview implements Renderable, Sensor {
 				startCameraPreview();
 			}
 		} else {
-			Log.d(TAG, "Activity not found, postponing calculation of texture coordinates...");
+			Log.d(TAG, "Activity not found or camera size unknown, postponing calculation of texture coordinates...");
 			mHasPendingTextureCoordinatesCalculation = true;
 		}
 
@@ -130,6 +137,22 @@ public class CameraPreview implements Renderable, Sensor {
 	@Override
 	public void start() {
 		Log.d(TAG, "Starting camera...");
+
+		mCamera = Camera.open();
+		if (mCamera != null) {
+			final Camera.Parameters cameraParameters = mCamera.getParameters();
+			final Camera.Size size = CameraUtils.calculateLargestPreviewSize(mCamera);
+			cameraParameters.setPreviewSize(size.width, size.height);
+			Log.d("!@#", "Camera preview width: " + size.width + "; height: " + size.height);
+			mCamera.setParameters(cameraParameters);
+
+			mCameraWidth = size.width;
+			mCameraHeight = size.height;
+			mIsCameraSizeKnown = true;
+		}  else {
+			Toast.makeText(mActivity, R.string.error_can_not_open_camera, Toast.LENGTH_SHORT).show();
+		}
+
 		if (!mIsOpenGlReady) {
 			Log.d(TAG, "OpenGL is not ready, postponing preview...");
 			mHasPendingStartPreview = true;
@@ -150,16 +173,25 @@ public class CameraPreview implements Renderable, Sensor {
 			mCamera = null;
 		}
 		mIsOpenGlReady = false;
+		mIsCameraSizeKnown = false;
+	}
+
+	public void setWidth(final float width) {
+		mWidth = width;
+	}
+
+	public void setHeight(final float height) {
+		mHeight = height;
 	}
 
 	public void setActivity(final Activity activity) {
 		Log.d(TAG, "Setting activity...");
 		mActivity = activity;
 
-		if (mActivity != null && mHasPendingTextureCoordinatesCalculation) {
+		if (mActivity != null && mIsCameraSizeKnown && mHasPendingTextureCoordinatesCalculation) {
 			Log.d(TAG, "Pending texture coordinates calculation found, calculating texture coordinates...");
 			mHasPendingTextureCoordinatesCalculation = false;
-			calculateTextureCoordinates();
+			calculateTextureCoordinates(mCameraWidth, mCameraHeight);
 			mVertexBuffer = new VertexBuffer(mVertices);
 			if (mHasPendingStartPreview) {
 				Log.d(TAG, "Pending camera preview found, starting camera preview...");
@@ -170,15 +202,7 @@ public class CameraPreview implements Renderable, Sensor {
 	}
 
 	private void startCameraPreview() {
-		mCamera = Camera.open();
-
 		if (mCamera != null) {
-			final Camera.Parameters cameraParameters = mCamera.getParameters();
-			final Camera.Size size = CameraUtils.calculateLargestPreviewSize(mCamera);
-			cameraParameters.setPreviewSize(size.width, size.height);
-			Log.d("!@#", "Camera preview width: " + size.width + "; height: " + size.height);
-			mCamera.setParameters(cameraParameters);
-
 			mSurfaceTexture = new SurfaceTexture(mTextureUnitLocation);
 
 			try {
@@ -188,8 +212,6 @@ public class CameraPreview implements Renderable, Sensor {
 			}
 
 			mCamera.startPreview();
-		} else {
-			Toast.makeText(mActivity, R.string.error_can_not_open_camera, Toast.LENGTH_SHORT).show();
 		}
 	}
 
@@ -205,10 +227,35 @@ public class CameraPreview implements Renderable, Sensor {
 		return intBuffer.get(0);
 	}
 
-	private void calculateTextureCoordinates() {
+	private float calculateTextureCoordinate(final float cameraWidth, final float cameraHeight) {
+		final float viewportAspectRatio;
+		if (mWidth > mHeight) {
+			viewportAspectRatio = mWidth / mHeight;
+		} else {
+			viewportAspectRatio = mHeight / mWidth;
+		}
+
+		final float cameraAspectRatio;
+		if (cameraWidth > cameraHeight) {
+			cameraAspectRatio = cameraWidth / cameraHeight;
+		} else {
+			cameraAspectRatio = cameraHeight / cameraWidth;
+		}
+
+		if (cameraAspectRatio < viewportAspectRatio) {
+			return cameraAspectRatio / viewportAspectRatio;
+		} else {
+			return viewportAspectRatio / cameraAspectRatio;
+		}
+	}
+
+	private void calculateTextureCoordinates(final float cameraWidth, final float cameraHeight) {
+		final float factoredTextureCoordinate = calculateTextureCoordinate(cameraWidth, cameraHeight);
+		Log.d(TAG, "Factored texture coordinate: " + factoredTextureCoordinate);
 		switch (mActivity.getWindowManager().getDefaultDisplay().getRotation()) {
 			case Surface.ROTATION_0:
 				Log.d(TAG, "ROTATION_0 detected");
+				/*
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.99825f;
@@ -221,24 +268,24 @@ public class CameraPreview implements Renderable, Sensor {
 				// top right
 				mVertices[14] = 0.0f;
 				mVertices[15] = 0.0f;
-				/*
+				*/
 				// top left
 				mVertices[2] = 0.0f;
-				mVertices[3] = 1.0f;
+				mVertices[3] = factoredTextureCoordinate;
 				// bottom left
 				mVertices[6] = 1.0f;
-				mVertices[7] = 1.0f;
+				mVertices[7] = factoredTextureCoordinate;
 				// bottom right
 				mVertices[10] = 1.0f;
 				mVertices[11] = 0.0f;
 				// top right
 				mVertices[14] = 0.0f;
 				mVertices[15] = 0.0f;
-				*/
 				break;
 
 			case Surface.ROTATION_90:
 				Log.d(TAG, "ROTATION_90 detected");
+				/*
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.0f;
@@ -251,20 +298,19 @@ public class CameraPreview implements Renderable, Sensor {
 				// top right
 				mVertices[14] = 1.0f;
 				mVertices[15] = 0.0f;
-				/*
+				*/
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.0f;
 				// bottom left
 				mVertices[6] = 0.0f;
-				mVertices[7] = 1.0f;
+				mVertices[7] = factoredTextureCoordinate;
 				// bottom right
 				mVertices[10] = 1.0f;
-				mVertices[11] = 1.0f;
+				mVertices[11] = factoredTextureCoordinate;
 				// top right
 				mVertices[14] = 1.0f;
 				mVertices[15] = 0.0f;
-				*/
 				break;
 
 			case Surface.ROTATION_180:
@@ -277,17 +323,17 @@ public class CameraPreview implements Renderable, Sensor {
 				mVertices[7] = 0.0f;
 				// bottom right
 				mVertices[10] = 0.0f;
-				mVertices[11] = 1.0f;
+				mVertices[11] = factoredTextureCoordinate;
 				// top right
 				mVertices[14] = 1.0f;
-				mVertices[15] = 1.0f;
+				mVertices[15] = factoredTextureCoordinate;
 				break;
 
 			case Surface.ROTATION_270:
 				Log.d(TAG, "ROTATION_270 detected");
 				// top left
 				mVertices[2] = 1.0f;
-				mVertices[3] = 1.0f;
+				mVertices[3] = factoredTextureCoordinate;
 				// bottom left
 				mVertices[6] = 1.0f;
 				mVertices[7] = 0.0f;
@@ -296,7 +342,7 @@ public class CameraPreview implements Renderable, Sensor {
 				mVertices[11] = 0.0f;
 				// top right
 				mVertices[14] = 0.0f;
-				mVertices[15] = 1.0f;
+				mVertices[15] = factoredTextureCoordinate;
 				break;
 
 			default:
@@ -304,10 +350,10 @@ public class CameraPreview implements Renderable, Sensor {
 				Toast.makeText(mActivity, "Unknown orientation", Toast.LENGTH_SHORT).show();
 				// top left
 				mVertices[2] = 0.0f;
-				mVertices[3] = 1.0f;
+				mVertices[3] = factoredTextureCoordinate;
 				// bottom left
 				mVertices[6] = 1.0f;
-				mVertices[7] = 1.0f;
+				mVertices[7] = factoredTextureCoordinate;
 				// bottom right
 				mVertices[10] = 1.0f;
 				mVertices[11] = 0.0f;
