@@ -1,4 +1,4 @@
-package org.ilapin.arvelocity.graphics;
+package org.ilapin.arvelocity.graphics.camerapreview;
 
 import android.content.Context;
 import android.opengl.GLES11Ext;

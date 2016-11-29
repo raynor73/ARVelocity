@@ -1,4 +1,4 @@
-package org.ilapin.arvelocity.sensor;
+package org.ilapin.common.sensor;
 
 public interface Sensor {
 

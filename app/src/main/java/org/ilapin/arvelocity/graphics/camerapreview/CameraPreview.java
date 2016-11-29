@@ -1,4 +1,4 @@
-package org.ilapin.arvelocity.graphics;
+package org.ilapin.arvelocity.graphics.camerapreview;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,10 +9,11 @@ import android.opengl.Matrix;
 import android.util.Log;
 import android.widget.Toast;
 import org.ilapin.arvelocity.free.R;
-import org.ilapin.arvelocity.sensor.Sensor;
+import org.ilapin.arvelocity.graphics.Renderable;
 import org.ilapin.common.android.CameraUtils;
 import org.ilapin.common.android.opengl.IndexBuffer;
 import org.ilapin.common.android.opengl.VertexBuffer;
+import org.ilapin.common.sensor.Sensor;
 
 import java.io.IOException;
 import java.nio.IntBuffer;

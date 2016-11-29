@@ -10,8 +10,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import org.ilapin.arvelocity.graphics.CameraPreview;
 import org.ilapin.arvelocity.graphics.MainRenderer;
+import org.ilapin.arvelocity.graphics.camerapreview.CameraPreview;
 import org.ilapin.arvelocity.ui.MessageDialog;
 
 import javax.inject.Inject;

@@ -2,6 +2,7 @@ package org.ilapin.arvelocity.graphics;
 
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+import org.ilapin.arvelocity.graphics.camerapreview.CameraPreview;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

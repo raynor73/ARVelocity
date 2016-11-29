@@ -1,14 +1,12 @@
 package org.ilapin.arvelocity;
 
 import android.content.Context;
-
-import org.ilapin.arvelocity.graphics.CameraPreview;
-import org.ilapin.arvelocity.graphics.MainRenderer;
-
-import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
+import org.ilapin.arvelocity.graphics.MainRenderer;
+import org.ilapin.arvelocity.graphics.camerapreview.CameraPreview;
+
+import javax.inject.Singleton;
 
 @Module
 public class GraphicsModule {
