@@ -12,9 +12,11 @@ import static android.opengl.GLES20.*;
 public class MainRenderer implements GLSurfaceView.Renderer {
 
 	private final CameraPreview mCameraPreview;
+	private final MainScene mMainScene;
 
-	public MainRenderer(final CameraPreview cameraPreview) {
+	public MainRenderer(final CameraPreview cameraPreview, final MainScene mainScene) {
 		mCameraPreview = cameraPreview;
+		mMainScene = mainScene;
 	}
 
 	@Override
@@ -30,11 +32,13 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 		mCameraPreview.setWidth(width);
 		mCameraPreview.setHeight(height);
 		mCameraPreview.onOpenGlReady();
+		mMainScene.onOpenGlReady(width, height);
 	}
 
 	@Override
 	public void onDrawFrame(final GL10 gl10) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		mCameraPreview.render();
+		mMainScene.render();
 	}
 }

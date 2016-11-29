@@ -84,7 +84,6 @@ public class CameraPreview implements Renderable, Sensor {
 		mTextureUnitLocation = initTextureUnit();
 
 		if (mActivity != null && mIsCameraSizeKnown) {
-			Log.d(TAG, "...");
 			Log.d(TAG, "Activity found and camera size present, calculating texture coordinates...");
 			calculateTextureCoordinates(mCameraWidth, mCameraHeight);
 			mVertexBuffer = new VertexBuffer(mVertices);
@@ -139,7 +138,13 @@ public class CameraPreview implements Renderable, Sensor {
 	public void start() {
 		Log.d(TAG, "Starting camera...");
 
-		mCamera = Camera.open();
+		try {
+			mCamera = Camera.open();
+		} catch (final RuntimeException e) {
+			Toast.makeText(mActivity, R.string.error_connect_to_camera_service, Toast.LENGTH_SHORT).show();
+			Log.e(TAG, e.getMessage(), e);
+		}
+
 		if (mCamera != null) {
 			final Camera.Parameters cameraParameters = mCamera.getParameters();
 			final Camera.Size size = CameraUtils.calculateLargestPreviewSize(mCamera);

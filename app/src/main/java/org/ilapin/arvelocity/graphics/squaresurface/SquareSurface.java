@@ -1,6 +1,12 @@
 package org.ilapin.arvelocity.graphics.squaresurface;
 
+import android.content.Context;
 import org.ilapin.arvelocity.graphics.Renderable;
+import org.ilapin.arvelocity.graphics.Scene;
+import org.ilapin.common.android.opengl.VertexArray;
+
+import static android.opengl.GLES20.GL_LINES;
+import static android.opengl.GLES20.glDrawArrays;
 
 public class SquareSurface implements Renderable {
 
@@ -8,7 +14,16 @@ public class SquareSurface implements Renderable {
 	private static final int NUMBER_OF_LINE_COMPONENTS = NUMBER_OF_POSITION_COMPONENTS * 2;
 	private final float[] mLinesData;
 
-	public SquareSurface(final float cellSize, final int cellsOnEdge) {
+	private final Context mContext;
+	private final Scene mScene;
+
+	private SquareSurfaceShaderProgram mShaderProgram;
+	private VertexArray mVertexArray;
+
+	public SquareSurface(final Context context, final Scene scene, final float cellSize, final int cellsOnEdge) {
+		mContext = context;
+		mScene = scene;
+
 		mLinesData = new float[2 * (cellsOnEdge + 1) * NUMBER_OF_LINE_COMPONENTS];
 
 		final float size = cellSize * cellsOnEdge;
@@ -66,11 +81,23 @@ public class SquareSurface implements Renderable {
 
 	@Override
 	public void onOpenGlReady() {
-
+		mShaderProgram = new SquareSurfaceShaderProgram(mContext);
+		mVertexArray = new VertexArray(mLinesData);
 	}
 
 	@Override
 	public void render() {
+		mShaderProgram.useProgram();
 
+		mShaderProgram.setUniforms(mScene.getViewProjectionMatrix(), 0, 0.5f, 0, 1);
+
+		mVertexArray.setVertexAttribPointer(
+				0,
+				mShaderProgram.getPositionAttributeLocation(),
+				NUMBER_OF_POSITION_COMPONENTS,
+				0
+		);
+
+		glDrawArrays(GL_LINES, 0, mLinesData.length);
 	}
 }

@@ -2,7 +2,7 @@ package org.ilapin.arvelocity.graphics;
 
 public interface Scene {
 
-	//Camera getActiveCamera();
+	float[] getViewProjectionMatrix();
 
 	void onOpenGlReady(int viewPortWidth, int viewPortHeight);
 
