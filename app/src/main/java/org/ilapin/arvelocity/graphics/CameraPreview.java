@@ -2,11 +2,11 @@ package org.ilapin.arvelocity.graphics;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.opengl.Matrix;
 import android.util.Log;
-import android.view.Surface;
 import android.widget.Toast;
 import org.ilapin.arvelocity.free.R;
 import org.ilapin.arvelocity.sensor.Sensor;
@@ -125,8 +125,8 @@ public class CameraPreview implements Renderable, Sensor {
 				STRIDE
 		);
 
-		// TODO Remove texture matrix and try to calculate texture coordinates considering view and camera preview aspect ratios.
 		Matrix.setIdentityM(mSurfaceTextureTransformMatrix, 0);
+		//mSurfaceTexture.getTransformMatrix(mSurfaceTextureTransformMatrix);
 		mShaderProgram.setUniforms(mTextureUnitLocation, mSurfaceTextureTransformMatrix);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer.getBufferId());
@@ -252,10 +252,40 @@ public class CameraPreview implements Renderable, Sensor {
 	private void calculateTextureCoordinates(final float cameraWidth, final float cameraHeight) {
 		final float factoredTextureCoordinate = calculateTextureCoordinate(cameraWidth, cameraHeight);
 		Log.d(TAG, "Factored texture coordinate: " + factoredTextureCoordinate);
+
+		if (mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+			// top left
+			mVertices[2] = 0.0f;
+			mVertices[3] = factoredTextureCoordinate;
+			// bottom left
+			mVertices[6] = 1.0f;
+			mVertices[7] = factoredTextureCoordinate;
+			// bottom right
+			mVertices[10] = 1.0f;
+			mVertices[11] = 0.0f;
+			// top right
+			mVertices[14] = 0.0f;
+			mVertices[15] = 0.0f;
+		} else {
+			// top left
+			mVertices[2] = 0.0f;
+			mVertices[3] = 0.0f;
+			// bottom left
+			mVertices[6] = 0.0f;
+			mVertices[7] = factoredTextureCoordinate;
+			// bottom right
+			mVertices[10] = 1.0f;
+			mVertices[11] = factoredTextureCoordinate;
+			// top right
+			mVertices[14] = 1.0f;
+			mVertices[15] = 0.0f;
+		}
+		/*
 		switch (mActivity.getWindowManager().getDefaultDisplay().getRotation()) {
 			case Surface.ROTATION_0:
 				Log.d(TAG, "ROTATION_0 detected");
-				/*
+
+				//
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.99825f;
@@ -268,7 +298,8 @@ public class CameraPreview implements Renderable, Sensor {
 				// top right
 				mVertices[14] = 0.0f;
 				mVertices[15] = 0.0f;
-				*/
+				//
+
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = factoredTextureCoordinate;
@@ -285,7 +316,8 @@ public class CameraPreview implements Renderable, Sensor {
 
 			case Surface.ROTATION_90:
 				Log.d(TAG, "ROTATION_90 detected");
-				/*
+
+				//
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.0f;
@@ -298,7 +330,8 @@ public class CameraPreview implements Renderable, Sensor {
 				// top right
 				mVertices[14] = 1.0f;
 				mVertices[15] = 0.0f;
-				*/
+				//
+
 				// top left
 				mVertices[2] = 0.0f;
 				mVertices[3] = 0.0f;
@@ -361,5 +394,6 @@ public class CameraPreview implements Renderable, Sensor {
 				mVertices[14] = 0.0f;
 				mVertices[15] = 0.0f;
 		}
+		*/
 	}
 }
