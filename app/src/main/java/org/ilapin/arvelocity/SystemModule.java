@@ -11,9 +11,18 @@ import javax.inject.Singleton;
 public class SystemModule {
 
 	private final Context mContext;
+	private final float mPhysicalSizeFactor;
 
-	public SystemModule(final Context context) {
+	public SystemModule(final Context context, final float physicalSizeFactor) {
 		mContext = context;
+		mPhysicalSizeFactor = physicalSizeFactor;
+	}
+
+	@Provides
+	@Singleton
+	@PhysicalSizeFactor
+	public float providePhysicalSizeFactor() {
+		return mPhysicalSizeFactor;
 	}
 
 	@Provides

@@ -14,8 +14,8 @@ public class GraphicsModule {
 
 	@Provides
 	@Singleton
-	public MainScene provideMainScene(final Context context) {
-		return new MainScene(context);
+	public MainScene provideMainScene(final Context context, @PhysicalSizeFactor final float physicalSizeFactor) {
+		return new MainScene(context, physicalSizeFactor);
 	}
 
 	@Provides

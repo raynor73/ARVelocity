@@ -3,7 +3,6 @@ package org.ilapin.arvelocity.graphics;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
-import android.os.SystemClock;
 import org.ilapin.arvelocity.graphics.squaresurface.SquareSurface;
 import org.ilapin.common.geometry.Point;
 
@@ -17,12 +16,12 @@ public class MainScene implements Scene {
 	private final float[] mViewMatrix = new float[16];
 	private final float[] mViewProjectionMatrix = new float[16];
 
-	private Point mPosition = new Point();
+	//private Point mPosition = new Point();
 
-	public MainScene(final Context context) {
-		mSquareSurface = new SquareSurface(context, this, 1, 10);
-		mSquareSurface.setRotation(1, 0, 0, -90);
-		mSquareSurface.setScale(new Point(2, 2, 2));
+	public MainScene(final Context context, final float physicalSizeFactor) {
+		mSquareSurface = new SquareSurface(context, this, 0.1f, 10);
+		//mSquareSurface.setRotation(1, 0, 0, -90);
+		mSquareSurface.setScale(new Point(physicalSizeFactor, physicalSizeFactor, physicalSizeFactor));
 	}
 
 	@Override
@@ -37,17 +36,18 @@ public class MainScene implements Scene {
 		mSquareSurface.onOpenGlReady();
 	}
 
-	private long mLastTimestamp = -1;
+//	private long mLastTimestamp = -1;
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	@Override
 	public void render() {
-		final long currentTimestamp = SystemClock.elapsedRealtimeNanos();
+//		final long currentTimestamp = SystemClock.elapsedRealtimeNanos();
 
-		setLookAtM(mViewMatrix, 0, 0, 10, 10, 0, 0, 0, 0, 1, 0);
+//		setLookAtM(mViewMatrix, 0, 0, 10, 0, 0, 10, -10, 0, 1, 0);
+		setLookAtM(mViewMatrix, 0, 0, 0, 1.01f, 0, 0, 0, 0, 1, 0);
 		multiplyMM(mViewProjectionMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
 
-		if (mLastTimestamp > 0) {
+		/*if (mLastTimestamp > 0) {
 			final long dt = currentTimestamp - mLastTimestamp;
 			float y = mPosition.getY() - 1f / 1000000000 * dt;
 			if (y < -5) {
@@ -56,7 +56,7 @@ public class MainScene implements Scene {
 			mPosition = new Point(mPosition.getX(), y, mPosition.getZ());
 		}
 		mLastTimestamp = currentTimestamp;
-		mSquareSurface.setPosition(mPosition);
+		mSquareSurface.setPosition(mPosition);*/
 
 		mSquareSurface.render();
 	}
