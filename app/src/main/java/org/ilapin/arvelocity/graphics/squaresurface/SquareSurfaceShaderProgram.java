@@ -20,8 +20,8 @@ public class SquareSurfaceShaderProgram extends ShaderProgram {
 		super(context, R.raw.square_surface_vertex_shader, R.raw.square_surface_fragment_shader);
 
 		mPositionAttributeLocation = glGetAttribLocation(mProgram, A_POSITION);
-		mMvpMatrixUniformLocation = glGetAttribLocation(mProgram, U_MVP_MATRIX);
-		mColorUniformLocation = glGetAttribLocation(mProgram, U_COLOR);
+		mMvpMatrixUniformLocation = glGetUniformLocation(mProgram, U_MVP_MATRIX);
+		mColorUniformLocation = glGetUniformLocation(mProgram, U_COLOR);
 	}
 
 	public void setUniforms(final float[] mvpMatrix, final float r, final float g, final float b, final float a) {

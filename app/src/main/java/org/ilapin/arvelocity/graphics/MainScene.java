@@ -14,7 +14,7 @@ public class MainScene implements Scene {
 	private final float[] mViewProjectionMatrix = new float[16];
 
 	public MainScene(final Context context) {
-		mSquareSurface = new SquareSurface(context, this, 10, 10);
+		mSquareSurface = new SquareSurface(context, this, 1, 10);
 	}
 
 	@Override

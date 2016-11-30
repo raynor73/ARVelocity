@@ -38,7 +38,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 	@Override
 	public void onDrawFrame(final GL10 gl10) {
 		glClear(GL_COLOR_BUFFER_BIT);
-		mCameraPreview.render();
+		//mCameraPreview.render();
 		mMainScene.render();
 	}
 }

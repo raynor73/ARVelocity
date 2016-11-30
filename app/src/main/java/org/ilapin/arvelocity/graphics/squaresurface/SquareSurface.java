@@ -89,7 +89,7 @@ public class SquareSurface implements Renderable {
 	public void render() {
 		mShaderProgram.useProgram();
 
-		mShaderProgram.setUniforms(mScene.getViewProjectionMatrix(), 0, 0.5f, 0, 1);
+		mShaderProgram.setUniforms(mScene.getViewProjectionMatrix(), 0.5f, 0.5f, 0.5f, 0.5f);
 
 		mVertexArray.setVertexAttribPointer(
 				0,
@@ -98,6 +98,6 @@ public class SquareSurface implements Renderable {
 				0
 		);
 
-		glDrawArrays(GL_LINES, 0, mLinesData.length);
+		glDrawArrays(GL_LINES, 0, mLinesData.length / NUMBER_OF_POSITION_COMPONENTS);
 	}
 }
